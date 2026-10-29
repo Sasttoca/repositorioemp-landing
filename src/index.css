@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@keyframes loadingBar {
+  0% { width: 0%; transform: translateX(0); }
+  50% { width: 70%; }
+  100% { width: 100%; transform: translateX(0); }
+}
+
+/* ===== Fondo dividido del hero ===== */
+
+/* Mitad negra: patrón de puntos que se desvanece hacia los bordes */
+.dots-dark {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse at 20% 50%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(ellipse at 20% 50%, #000 0%, transparent 70%);
+}
+
+/* Mitad blanca: --t va de 0 a 1 entre p=0.2 y p=0.53 (cuando el panel invade todo) */
+.split-panel {
+  --t: clamp(0, calc((var(--p, 0) - 0.2) * 3), 1);
+  position: absolute;
+  inset: auto 0 0 0;
+  height: calc(40% + var(--t) * 60%);
+  background: #f4f4f5;
+  overflow: hidden;
+}
+
+.grid-light {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 75%);
+}
+
+ @media (min-width: 1024px) {
+  .split-panel {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(
+      calc(62% - var(--t) * 62%) 0,
+      100% 0,
+      100% 100%,
+      calc(46% - var(--t) * 46%) 100%
+    );
+  }
+}
+
+/* ===== Marco de tablet (se ve al entrar a las secciones) ===== */
+.tablet-chrome {
+  --bezel: clamp(8px, 1.3vw, 18px);
+  --radius: clamp(16px, 2.2vw, 30px);
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  opacity: clamp(0, calc((var(--p, 0) - 0.9) * 10), 1);
+}
+
+/* Canto metálico exterior */
+.tablet-chrome::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 2px #3f3f46;
+}
+
+/* Bisel: la sombra gigante pinta todo lo que queda fuera de la pantalla redondeada */
+.tablet-mask {
+  position: absolute;
+  inset: var(--bezel);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 100vmax #050506,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 0 50px rgba(0, 0, 0, 0.55);
+}
+
+/* Reflejo de cristal que se desplaza con el scroll (--sy va de 0 a 1) */
+.tablet-sheen {
+  position: absolute;
+  inset: var(--bezel);
+  border-radius: var(--radius);
+  background: linear-gradient(
+    115deg,
+    transparent calc(25% + var(--sy, 0) * 40%),
+    rgba(255, 255, 255, 0.05) calc(37% + var(--sy, 0) * 40%),
+    transparent calc(49% + var(--sy, 0) * 40%)
+  );
+}
+
+.tablet-camera {
+  position: absolute;
+  top: calc(var(--bezel) / 2 - 2.5px);
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: #0e0e18;
+  box-shadow: 0 0 0 1px #1c1c26;
+}
+
+/* Degradado para que el contenido no choque con el menú al pasar por debajo */
+.tablet-fade {
+  position: absolute;
+  top: var(--bezel);
+  left: var(--bezel);
+  right: var(--bezel);
+  height: 130px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.6) 55%, transparent);
+}
+
+.tablet-status {
+  position: absolute;
+  top: calc(var(--bezel) + 8px);
+  left: calc(var(--bezel) + 24px);
+  right: calc(var(--bezel) + 24px);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tablet-nav {
+  position: absolute;
+  top: calc(var(--bezel) + 34px);
+  left: calc(var(--bezel) + 24px);
+  right: calc(var(--bezel) + 24px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  pointer-events: none;
+}
+.tablet-chrome.is-entered .tablet-nav {
+  pointer-events: auto;
+}
+
+.tablet-home {
+  position: absolute;
+  bottom: calc(var(--bezel) + 8px);
+  left: 50%;
+  width: 120px;
+  height: 4px;
+  margin-left: -60px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Resplandor azul de fondo (como en la referencia) */
+.tablet-glow {
+  background:
+    radial-gradient(60% 50% at 0% 0%, rgba(30, 110, 180, 0.35), transparent 70%),
+    radial-gradient(50% 45% at 100% 100%, rgba(30, 110, 180, 0.25), transparent 70%);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
