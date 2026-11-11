@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { RoundedBox, Environment, Lightformer, ContactShadows } from '@react-three/drei';
+import { RoundedBox, Environment, Lightformer } from '@react-three/drei';
 import * as THREE from 'three';
 import { PROJECTS } from './projects';
 
@@ -47,6 +47,17 @@ function wrap(ctx, text, x, y, maxW, lh) {
   ctx.fillText(line, x, y);
 }
 
+// Capturas reales de los proyectos, precargadas para pintarlas en la pantalla
+const IMAGES = {};
+if (typeof Image !== 'undefined') {
+  PROJECTS.forEach((p) => {
+    if (!p.image) return;
+    const img = new Image();
+    img.src = p.image;
+    IMAGES[p.image] = img;
+  });
+}
+
 function drawProject(ctx, p, dx, alpha) {
   if (alpha <= 0.01) return;
   ctx.save();
@@ -71,36 +82,70 @@ function drawProject(ctx, p, dx, alpha) {
   ctx.fillText(p.name, 56, 360);
   ctx.fillStyle = '#a1a1aa';
   ctx.font = '400 24px system-ui, sans-serif';
-  wrap(ctx, p.desc, 56, 410, 500, 34);
+  wrap(ctx, p.desc, 56, 410, 470, 34);
 
-  // Mockup del proyecto
-  const mx = 600, my = 230, mw = 368, mh = 280;
-  const g = ctx.createLinearGradient(mx, my, mx + mw, my + mh);
-  g.addColorStop(0, `rgba(${p.accent},0.35)`);
-  g.addColorStop(1, `rgba(${p.accent},0.05)`);
-  rr(ctx, mx, my, mw, mh, 24);
-  ctx.fillStyle = g;
+  // Mockup del proyecto: ventana de navegador con la captura real (si existe)
+  const mx = 584, my = 214, mw = 388, mh = 300, bar = 40;
+  const img = p.image ? IMAGES[p.image] : null;
+  const ready = img && img.complete && img.naturalWidth > 0;
+
+  // Sombra bajo la ventana
+  ctx.save();
+  ctx.shadowColor = `rgba(${p.accent},0.35)`;
+  ctx.shadowBlur = 60;
+  ctx.shadowOffsetY = 20;
+  rr(ctx, mx, my, mw, mh, 22);
+  ctx.fillStyle = '#0c0c10';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.stroke();
+  ctx.restore();
 
-  for (let i = 0; i < 3; i++) {
-    ctx.beginPath();
-    ctx.arc(mx + 28 + i * 20, my + 28, 5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.save();
+  rr(ctx, mx, my, mw, mh, 22);
+  ctx.clip();
+
+  if (ready) {
+    // Ajuste tipo "cover", anclado arriba (donde suele estar lo importante de una web)
+    const aw = mw, ah = mh - bar;
+    const s = Math.max(aw / img.naturalWidth, ah / img.naturalHeight);
+    const sw = aw / s, sh = ah / s;
+    ctx.drawImage(img, (img.naturalWidth - sw) / 2, 0, sw, sh, mx, my + bar, aw, ah);
+  } else {
+    const g = ctx.createLinearGradient(mx, my, mx + mw, my + mh);
+    g.addColorStop(0, `rgba(${p.accent},0.4)`);
+    g.addColorStop(1, `rgba(${p.accent},0.06)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(mx, my, mw, mh);
+    rr(ctx, mx + 28, my + bar + 28, 210, 16, 8);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fill();
+    rr(ctx, mx + 28, my + bar + 60, 150, 12, 6);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fill();
+    rr(ctx, mx + 28, my + bar + 100, 158, 110, 14);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fill();
+    rr(ctx, mx + 202, my + bar + 100, 158, 110, 14);
     ctx.fill();
   }
-  rr(ctx, mx + 28, my + 64, 200, 16, 8);
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+
+  // Barra superior de la ventana
+  ctx.fillStyle = 'rgba(14,14,18,0.92)';
+  ctx.fillRect(mx, my, mw, bar);
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.arc(mx + 24 + i * 18, my + bar / 2, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fill();
+  }
+  rr(ctx, mx + 96, my + 10, mw - 124, 20, 10);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
   ctx.fill();
-  rr(ctx, mx + 28, my + 96, 140, 12, 6);
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.fill();
-  rr(ctx, mx + 28, my + 140, 150, 100, 14);
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  ctx.fill();
-  rr(ctx, mx + 190, my + 140, 150, 100, 14);
-  ctx.fill();
+  ctx.restore();
+
+  rr(ctx, mx, my, mw, mh, 22);
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -148,10 +193,15 @@ function drawScreen(ctx, t) {
   const cur = Math.floor(t / SLIDE_TIME) % n;
   const next = (cur + 1) % n;
   const local = t % SLIDE_TIME;
-  const k = ease(Math.min(Math.max((local - (SLIDE_TIME - TRANS)) / TRANS, 0), 1));
+  const tr = Math.min(Math.max((local - (SLIDE_TIME - TRANS)) / TRANS, 0), 1);
+  const k = ease(tr);
 
-  drawProject(ctx, PROJECTS[cur], -k * 90, 1 - k);
-  drawProject(ctx, PROJECTS[next], (1 - k) * 90, k);
+  // Secuencial: el actual termina de salir antes de que entre el siguiente
+  // (así los textos nunca se enciman)
+  const out = ease(Math.min(tr / 0.45, 1));
+  const inn = ease(Math.max((tr - 0.45) / 0.55, 0));
+  drawProject(ctx, PROJECTS[cur], -out * 40, 1 - out);
+  drawProject(ctx, PROJECTS[next], (1 - inn) * 40, inn);
 
   // Indicadores (la activa se ensancha suavemente)
   let x = 56;
@@ -171,7 +221,32 @@ function drawScreen(ctx, t) {
   ctx.fillStyle = v;
   ctx.fillRect(0, 0, w, h);
 
+  // Reflejo diagonal del cristal
+  const sh = ctx.createLinearGradient(w * 0.35, 0, w * 0.95, h);
+  sh.addColorStop(0, 'rgba(255,255,255,0)');
+  sh.addColorStop(0.42, 'rgba(255,255,255,0)');
+  sh.addColorStop(0.5, 'rgba(255,255,255,0.055)');
+  sh.addColorStop(0.62, 'rgba(255,255,255,0.015)');
+  sh.addColorStop(0.63, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sh;
+  ctx.fillRect(0, 0, w, h);
+
   ctx.restore();
+}
+
+// Textura de sombra suave (degradado radial) para simular que la tablet flota
+function makeShadowTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+  g.addColorStop(0, 'rgba(0,0,0,1)');
+  g.addColorStop(0.35, 'rgba(0,0,0,0.55)');
+  g.addColorStop(0.7, 'rgba(0,0,0,0.12)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g;
+  x.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(c);
 }
 
 function Screen() {
@@ -237,6 +312,9 @@ function TabletModel({ progress }) {
   const tilt = useRef();   // rotación
   const bob = useRef();    // flotación
   const mouse = useRef({ x: 0, y: 0 });
+  const halo = useRef();   // sombra ambiental detrás
+  const floor = useRef();  // sombra de contacto debajo
+  const shadowTex = useMemo(() => makeShadowTexture(), []);
   const { camera, size } = useThree();
 
   useFrame(({ pointer, clock }, delta) => {
@@ -251,7 +329,7 @@ function TabletModel({ progress }) {
   // Zona del viewport donde vive la tablet en reposo (fracciones de 0 a 1)
   // cx/cy = centro, w/h = tamaño máximo
   const zone = desktop
-    ? { cx: 0.79, cy: 0.5, w: 0.34, h: 0.6 }   // mitad blanca
+    ? { cx: 0.755, cy: 0.5, w: 0.34, h: 0.6 }   // mitad blanca
     : { cx: 0.5, cy: 0.8, w: 0.82, h: 0.3 };   // franja blanca de abajo
 
   // La tablet se escala para caber en su zona (nunca más grande que 1)
@@ -286,6 +364,12 @@ function TabletModel({ progress }) {
     bob.current.position.y = Math.sin(t * 1.2) * 0.08 * k;
     bob.current.rotation.z = Math.sin(t * 0.8) * 0.01 * k;
 
+    // Sombras: se apagan al acercarnos y "respiran" con la flotación
+    const lift = Math.sin(t * 1.2); // -1 abajo, 1 arriba
+    halo.current.material.opacity = 0.3 * k;
+    floor.current.material.opacity = (0.34 - lift * 0.07) * k;
+    floor.current.scale.setScalar(1 + lift * 0.05);
+
     // Distancia final: la pantalla cubre todo el viewport (96% para evitar bordes)
     const dH = SCREEN_H / (2 * TAN);
     const dW = SCREEN_W / (2 * TAN * aspect);
@@ -300,7 +384,7 @@ function TabletModel({ progress }) {
       <group ref={tilt}>
         <group ref={bob}>
           <RoundedBox args={[W, H, D]} radius={0.12} smoothness={8} creaseAngle={0.4}>
-            <meshStandardMaterial color="#3f3f46" metalness={1} roughness={0.32} />
+            <meshStandardMaterial color="#8b8b94" metalness={1} roughness={0.26} />
           </RoundedBox>
 
           <RoundedBox
@@ -325,7 +409,17 @@ function TabletModel({ progress }) {
         </group>
       </group>
 
-      <ContactShadows position={[0, -1.9, 0]} opacity={0.45} scale={9} blur={2.8} far={4} />
+      {/* Sombra ambiental: separa la tablet del fondo claro */}
+      <mesh ref={halo} position={[0.12, -0.3, -0.7]} renderOrder={-2}>
+        <planeGeometry args={[W * 1.75, H * 2]} />
+        <meshBasicMaterial map={shadowTex} transparent opacity={0.3} depthWrite={false} toneMapped={false} />
+      </mesh>
+
+      {/* Sombra de contacto: elipse bajo la tablet, como si flotara sobre una mesa */}
+      <mesh ref={floor} position={[0.05, -H / 2 - 0.62, -0.2]} renderOrder={-1}>
+        <planeGeometry args={[W * 1.15, 0.5]} />
+        <meshBasicMaterial map={shadowTex} transparent opacity={0.34} depthWrite={false} toneMapped={false} />
+      </mesh>
     </group>
   );
 }

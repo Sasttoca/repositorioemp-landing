@@ -4,6 +4,7 @@ export const PROJECTS = [
     tag: 'SaaS · React · Firebase',
     desc: 'Plataforma multi-inquilino para agencias de marketing digital, con roles, tablas dinámicas y datos en tiempo real.',
     accent: '125,170,255',
+    showcase: false, // no aparece en la cinta de "Proyectos seleccionados"
   },
   {
     name: 'Llano Torneo',
@@ -26,5 +27,20 @@ export const PROJECTS = [
     tag: 'Landing · React · GSAP',
     desc: 'Landing animada para un centro de grooming de mascotas.',
     accent: '110,231,183',
+    image: '/projects/royalspets.webp',
+  },
+  {
+    name: 'NexTech',
+    tag: 'Tienda online · Catálogo · WhatsApp',
+    desc: 'Tienda de tecnología con catálogo de productos, buscador y pedidos directos por WhatsApp o Instagram.',
+    accent: '124,131,255',
+    image: '/projects/nextech.webp',
+  },
+  {
+    name: 'Portafolio interactivo',
+    tag: 'Portafolio personal · Interactivo',
+    desc: 'Portafolio personal en forma de habitación isométrica: se explora haciendo clic en el personaje, los muebles y las mascotas.',
+    accent: '150,200,120',
+    image: '/projects/portafolio-interactivo.webp',
   },
 ];
