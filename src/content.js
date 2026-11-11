@@ -46,8 +46,24 @@ export const TABS = [
 ];
 
 export const CATALOGO = [
-  { title: 'Landing pages', desc: 'Sitios rápidos y animados que convierten visitas en clientes.', c: '125,170,255' },
-  { title: 'Apps web a medida', desc: 'Paneles, agendamiento y sistemas con React y Firebase.', c: '180,140,255' },
-  { title: 'Automatización', desc: 'Procesos que se ejecutan solos para que ahorres tiempo.', c: '110,231,183' },
+  // price: precio "desde" en pesos colombianos. Si es null se muestra "Cotización a medida".
+  {
+    title: 'Landing pages',
+    desc: 'Sitios rápidos y animados que convierten visitas en clientes.',
+    price: '$600.000',
+    c: '125,170,255',
+  },
+  {
+    title: 'Apps web a medida',
+    desc: 'Sistemas hechos para tu negocio: citas y reservas, pedidos, inventario o un panel para tener todo en un solo lugar.',
+    price: '$1.200.000',
+    c: '180,140,255',
+  },
+  {
+    title: 'Automatización',
+    desc: 'Procesos que se ejecutan solos para que ahorres tiempo.',
+    price: null,
+    c: '110,231,183',
+  },
 ];
 /* ================================================================ */

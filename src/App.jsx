@@ -9,7 +9,7 @@ function HeroBackground() {
   return (
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute inset-0 dots-dark" />
-      <div className="split-panel">
+      <div data-p className="split-panel">
         <div className="grid-light" />
       </div>
       <div className="grain" />
@@ -32,7 +32,7 @@ function Clock() {
 function TabletChrome({ active, entered, goTo }) {
   const current = TABS.find((t) => t.id === active)?.label ?? '';
   return (
-    <div className={`tablet-chrome ${entered ? 'is-entered' : ''}`}>
+    <div data-p className={`tablet-chrome ${entered ? 'is-entered' : ''}`}>
       <div className="tablet-fade" />
       <div className="tablet-fade-bottom" />
       <div className="tablet-mask" />
@@ -111,9 +111,10 @@ export default function App() {
     const root = rootRef.current;
     if (!sc || !root) return;
 
+    const sheen = root.querySelector('.tablet-sheen');
     const onScroll = () => {
       const max = sc.scrollHeight - sc.clientHeight;
-      root.style.setProperty('--sy', max > 0 ? (sc.scrollTop / max).toFixed(3) : '0');
+      sheen?.style.setProperty('--sy', max > 0 ? (sc.scrollTop / max).toFixed(3) : '0');
     };
     sc.addEventListener('scroll', onScroll, { passive: true });
 
@@ -142,17 +143,18 @@ export default function App() {
 
         {/* Menú del hero: se desvanece al entrar a la tablet (ahí lo reemplaza el menú de pestañas) */}
         <header
-          className="fixed top-0 left-0 right-0 z-50 text-white mix-blend-difference"
+          data-p
+          className="hero-header fixed top-0 left-0 right-0 z-50"
           style={{
             opacity: 'clamp(0, calc(1 - (var(--p, 0) - 0.82) * 12), 1)',
             pointerEvents: entered ? 'none' : 'auto',
           }}
         >
           <div className="mx-auto max-w-[1500px] p-6 lg:p-10 flex justify-between items-center">
-            <button onClick={() => goTo('inicio')} className="text-xl font-black tracking-widest">
+            <button onClick={() => goTo('inicio')} className="hero-logo text-xl font-black tracking-widest">
               CODE<span className="opacity-50">.WEB</span>
             </button>
-            <nav className="hidden md:flex gap-8 text-sm tracking-widest uppercase">
+            <nav className="hero-nav hidden md:flex gap-8 text-sm tracking-widest uppercase">
               {TABS.map((t) => (
                 <button
                   key={t.id}
@@ -179,6 +181,7 @@ export default function App() {
           </div>
 
           <div
+            data-p
             className="absolute inset-0 z-10 flex items-start lg:items-center pt-28 lg:pt-0 px-6 sm:px-12 lg:px-20 pointer-events-none"
             style={{
               opacity: 'clamp(0, calc(1 - var(--p, 0) * 3.5), 1)',
@@ -220,6 +223,7 @@ export default function App() {
 
           {/* Indicador de scroll (escritorio): el scroll es la interacción principal del hero */}
           <div
+            data-p
             className="hidden lg:block absolute z-10 inset-x-0 bottom-10 px-20 pointer-events-none"
             style={{ opacity: 'clamp(0, calc(1 - var(--p, 0) * 8), 1)' }}
           >
@@ -235,7 +239,8 @@ export default function App() {
         {/* ===== SECCIONES: viven "dentro" de la pantalla de la tablet ===== */}
         <div
           ref={scrollerRef}
-          className="fixed inset-0 z-20 overflow-y-auto overflow-x-hidden bg-[#050507] no-scrollbar"
+          data-p
+          className="tablet-scroller fixed inset-0 z-20 overflow-y-auto overflow-x-hidden bg-[#050507] no-scrollbar"
           style={{
             opacity: 'clamp(0, calc((var(--p, 0) - 0.9) * 10), 1)',
             transform: 'scale(calc(1.06 - clamp(0, calc((var(--p, 0) - 0.9) * 10), 1) * 0.06))',

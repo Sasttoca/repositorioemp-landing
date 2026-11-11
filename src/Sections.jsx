@@ -298,6 +298,19 @@ export default function Sections({ goTo }) {
                     </p>
 
                     <div className="mt-auto pt-10">
+                      <p className="mb-6">
+                        <span className={`block font-mono text-[11px] ${light ? 'text-[#273c46]' : 'text-zinc-500'}`}>
+                          {c.price ? 'Desde' : 'Precio'}
+                        </span>
+                        {c.price ? (
+                          <>
+                            <span className="text-[34px] font-semibold leading-none tracking-[-0.03em]">{c.price}</span>
+                            <span className={`ml-1.5 text-xs ${light ? 'text-[#273c46]' : 'text-zinc-500'}`}>COP</span>
+                          </>
+                        ) : (
+                          <span className="text-xl font-medium leading-[34px]">Cotización a medida</span>
+                        )}
+                      </p>
                       <Btn variant={light ? 'dark' : 'secondary'} onClick={() => goTo('contacto')}>
                         Cotizar <span aria-hidden="true">→</span>
                       </Btn>

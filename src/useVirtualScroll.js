@@ -38,6 +38,11 @@ export default function useVirtualScroll({ rootRef, scrollerRef, enabled = true 
     const sc = scrollerRef.current;
     if (!root || !sc) return;
     let raf;
+    // --p se escribe solo en los elementos que lo usan ([data-p]), no en la raíz:
+    // así el navegador no recalcula los estilos de toda la página en cada cuadro.
+    const targets = root.querySelectorAll('[data-p]');
+    let lastP = '';
+    let far = null;
 
     // dp = cambio de progreso (+ avanza hacia la tablet, - retrocede)
     const push = (dp) => {
@@ -107,7 +112,17 @@ export default function useVirtualScroll({ rootRef, scrollerRef, enabled = true 
       const diff = target.current - progress.current;
       progress.current =
         Math.abs(diff) < 0.0002 ? target.current : progress.current + diff * 0.08;
-      root.style.setProperty('--p', progress.current.toFixed(4));
+      const pv = progress.current.toFixed(4);
+      if (pv !== lastP) {
+        lastP = pv;
+        targets.forEach((el) => el.style.setProperty('--p', pv));
+      }
+      // Lejos de la tablet: el contenido interior se oculta y sus animaciones se pausan
+      const isFar = progress.current < 0.86;
+      if (isFar !== far) {
+        far = isFar;
+        root.classList.toggle('is-far', isFar);
+      }
 
       if (!enteredRef.current && target.current >= 1 && progress.current >= ENTER_AT) {
         progress.current = 1;

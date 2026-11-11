@@ -150,34 +150,44 @@ function drawProject(ctx, p, dx, alpha) {
   ctx.restore();
 }
 
-function drawScreen(ctx, t) {
+function makeCanvas() {
+  const c = document.createElement('canvas');
+  c.width = CW;
+  c.height = CH;
+  return c;
+}
+
+/*
+  Rendimiento: la pantalla NO se redibuja desde cero en cada cuadro.
+  - El fondo y el reflejo se pintan una sola vez.
+  - Cada proyecto se pinta una vez en su propio lienzo (con sombras y captura).
+  - Por cuadro solo se combinan esas imágenes, y únicamente durante la transición.
+*/
+let LAYERS = null;
+function getLayers() {
+  if (LAYERS) return LAYERS;
   const w = CW;
   const h = CH;
 
+  // Fondo: luces, barra de estado y encabezado
+  const bg = makeCanvas();
+  let ctx = bg.getContext('2d');
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, w, h);
-  ctx.save();
   rr(ctx, 0, 0, w, h, 36);
   ctx.clip();
   ctx.fillStyle = '#060608';
   ctx.fillRect(0, 0, w, h);
-
-  // Luces de fondo (movimiento lento = sin parpadeo)
-  const blobs = [
+  [
     { x: 0.2, y: 0.3, r: 420, c: '255,255,255', a: 0.1 },
     { x: 0.85, y: 0.75, r: 460, c: '125,170,255', a: 0.18 },
-  ];
-  blobs.forEach((b, i) => {
-    const x = w * b.x + Math.sin(t * 0.3 + i * 2) * 80;
-    const y = h * b.y + Math.cos(t * 0.25 + i * 3) * 50;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, b.r);
+  ].forEach((b) => {
+    const g = ctx.createRadialGradient(w * b.x, h * b.y, 0, w * b.x, h * b.y, b.r);
     g.addColorStop(0, `rgba(${b.c},${b.a})`);
     g.addColorStop(1, `rgba(${b.c},0)`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
   });
-
-  // Barra de estado + encabezado
   ctx.fillStyle = 'rgba(255,255,255,0.75)';
   ctx.font = '600 22px system-ui, sans-serif';
   ctx.fillText('9:41', 56, 52);
@@ -188,20 +198,76 @@ function drawScreen(ctx, t) {
   ctx.font = '400 22px system-ui, sans-serif';
   ctx.fillText('Proyectos seleccionados', 56, 166);
 
-  // Carrusel con transición suave
+  // Capa superior: viñeta + reflejo diagonal del cristal
+  const over = makeCanvas();
+  ctx = over.getContext('2d');
+  rr(ctx, 0, 0, w, h, 36);
+  ctx.clip();
+  const v = ctx.createRadialGradient(w / 2, h / 2, h * 0.4, w / 2, h / 2, w * 0.7);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, w, h);
+  const sh = ctx.createLinearGradient(w * 0.35, 0, w * 0.95, h);
+  sh.addColorStop(0, 'rgba(255,255,255,0)');
+  sh.addColorStop(0.42, 'rgba(255,255,255,0)');
+  sh.addColorStop(0.5, 'rgba(255,255,255,0.055)');
+  sh.addColorStop(0.62, 'rgba(255,255,255,0.015)');
+  sh.addColorStop(0.63, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sh;
+  ctx.fillRect(0, 0, w, h);
+
+  LAYERS = { bg, over };
+  return LAYERS;
+}
+
+// Un lienzo por proyecto; se vuelve a pintar solo si su captura termina de cargar
+const SLIDES = new Map();
+function slideFor(p) {
+  const img = p.image ? IMAGES[p.image] : null;
+  const ready = !img || (img.complete && img.naturalWidth > 0);
+  let s = SLIDES.get(p.name);
+  if (!s || s.ready !== ready) {
+    const canvas = s ? s.canvas : makeCanvas();
+    const c = canvas.getContext('2d');
+    c.clearRect(0, 0, CW, CH);
+    drawProject(c, p, 0, 1);
+    s = { canvas, ready };
+    SLIDES.set(p.name, s);
+  }
+  return s;
+}
+
+// Devuelve una "clave" del estado pintado; si coincide con la anterior no hace nada
+function drawScreen(ctx, t, lastKey) {
+  const h = CH;
   const n = PROJECTS.length;
   const cur = Math.floor(t / SLIDE_TIME) % n;
   const next = (cur + 1) % n;
   const local = t % SLIDE_TIME;
   const tr = Math.min(Math.max((local - (SLIDE_TIME - TRANS)) / TRANS, 0), 1);
+
+  const a = slideFor(PROJECTS[cur]);
+  const key = tr > 0 ? `t${cur}:${tr.toFixed(3)}` : `s${cur}:${a.ready}`;
+  if (key === lastKey) return key;
+
+  const { bg, over } = getLayers();
   const k = ease(tr);
+  ctx.globalAlpha = 1;
+  ctx.drawImage(bg, 0, 0);
 
   // Secuencial: el actual termina de salir antes de que entre el siguiente
-  // (así los textos nunca se enciman)
   const out = ease(Math.min(tr / 0.45, 1));
   const inn = ease(Math.max((tr - 0.45) / 0.55, 0));
-  drawProject(ctx, PROJECTS[cur], -out * 40, 1 - out);
-  drawProject(ctx, PROJECTS[next], (1 - inn) * 40, inn);
+  if (out < 0.99) {
+    ctx.globalAlpha = 1 - out;
+    ctx.drawImage(a.canvas, -out * 40, 0);
+  }
+  if (inn > 0.01) {
+    ctx.globalAlpha = inn;
+    ctx.drawImage(slideFor(PROJECTS[next]).canvas, (1 - inn) * 40, 0);
+  }
+  ctx.globalAlpha = 1;
 
   // Indicadores (la activa se ensancha suavemente)
   let x = 56;
@@ -214,24 +280,8 @@ function drawScreen(ctx, t) {
     x += pw + 10;
   }
 
-  // Viñeta
-  const v = ctx.createRadialGradient(w / 2, h / 2, h * 0.4, w / 2, h / 2, w * 0.7);
-  v.addColorStop(0, 'rgba(0,0,0,0)');
-  v.addColorStop(1, 'rgba(0,0,0,0.5)');
-  ctx.fillStyle = v;
-  ctx.fillRect(0, 0, w, h);
-
-  // Reflejo diagonal del cristal
-  const sh = ctx.createLinearGradient(w * 0.35, 0, w * 0.95, h);
-  sh.addColorStop(0, 'rgba(255,255,255,0)');
-  sh.addColorStop(0.42, 'rgba(255,255,255,0)');
-  sh.addColorStop(0.5, 'rgba(255,255,255,0.055)');
-  sh.addColorStop(0.62, 'rgba(255,255,255,0.015)');
-  sh.addColorStop(0.63, 'rgba(255,255,255,0)');
-  ctx.fillStyle = sh;
-  ctx.fillRect(0, 0, w, h);
-
-  ctx.restore();
+  ctx.drawImage(over, 0, 0);
+  return key;
 }
 
 // Textura de sombra suave (degradado radial) para simular que la tablet flota
@@ -251,6 +301,7 @@ function makeShadowTexture() {
 
 function Screen() {
   const last = useRef(0);
+  const lastKey = useRef('');
 
   const { texture, ctx } = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -265,13 +316,16 @@ function Screen() {
     return { texture: tex, ctx: context };
   }, []);
 
-  // Limitado a ~30 fps: menos trabajo y sin saltos innecesarios
+  // Limitado a ~30 fps, y solo se sube la textura a la GPU cuando la pantalla cambió
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
     if (t - last.current < 1 / 30) return;
     last.current = t;
-    drawScreen(ctx, t);
-    texture.needsUpdate = true;
+    const key = drawScreen(ctx, t, lastKey.current);
+    if (key !== lastKey.current) {
+      lastKey.current = key;
+      texture.needsUpdate = true;
+    }
   });
 
   return (
@@ -430,7 +484,7 @@ export default function Hero3D({ progress, active = true }) {
       <Canvas
         // Cuando ya entramos a las secciones, se pausa el render (ahorra batería)
         frameloop={active ? 'always' : 'never'}
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         camera={{ position: [0, 0, CAM_Z], fov: FOV, near: 0.5, far: 50 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       >

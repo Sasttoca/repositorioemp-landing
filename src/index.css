@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+/* Progreso del zoom (0 = hero, 1 = dentro de la tablet).
+   No se hereda: cada elemento que lo usa lo recibe directamente (atributo data-p). */
+@property --p {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --sy {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Lejos de la tablet no se pinta ni se anima nada de su interior */
+.is-far .tablet-scroller,
+.is-far .tablet-chrome {
+  visibility: hidden;
+}
+.is-far .wf rect,
+.is-far .wf path,
+.is-far .wf circle,
+.is-far .wf-cursor {
+  animation-play-state: paused;
+}
+
+/* Menú del hero: pasa de blanco a negro cuando el panel claro lo alcanza
+   (antes se hacía con mix-blend-mode, que obliga a recomponer toda la pantalla en cada cuadro) */
+.hero-header {
+  --logo: color-mix(in srgb, #09090b clamp(0%, calc((var(--p) - 0.5) * 3000%), 100%), #fff);
+}
+.hero-nav {
+  color: var(--logo);
+}
+@media (min-width: 1024px) {
+  .hero-header {
+    --logo: color-mix(in srgb, #09090b clamp(0%, calc((var(--p) - 0.43) * 1400%), 100%), #fff);
+  }
+  .hero-nav {
+    color: #18181b; /* en escritorio el menú siempre está sobre el panel claro */
+  }
+}
+.hero-logo {
+  color: var(--logo);
+}
+
 html,
 body,
 #root {
