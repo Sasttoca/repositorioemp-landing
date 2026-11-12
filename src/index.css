@@ -69,6 +69,27 @@ body,
   mask-image: radial-gradient(ellipse at 20% 50%, #000 0%, transparent 70%);
 }
 
+/* Texto del hero.
+   Celular: ocupa solo la franja negra (el 60% de arriba) y se apoya en su borde inferior,
+   así el botón nunca se monta sobre la franja blanca de la tablet.
+   Escritorio: ocupa toda la pantalla y se centra en vertical. */
+.hero-copy {
+  height: 60%;
+  padding-top: 76px; /* alto del menú */
+  padding-bottom: 20px;
+}
+@media (min-width: 1024px) {
+  .hero-copy {
+    height: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+/* Pantallas muy bajas: se oculta el párrafo para que quepan titular y botón */
+@media (max-width: 1023px) and (max-height: 620px) {
+  .hero-lede { display: none; }
+}
+
 /* Mitad blanca: --t va de 0 a 1 entre p=0.2 y p=0.53 (cuando el panel invade todo) */
 .split-panel {
   --t: clamp(0, calc((var(--p, 0) - 0.2) * 3), 1);

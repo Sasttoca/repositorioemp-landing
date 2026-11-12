@@ -89,7 +89,7 @@ function BuildBackdrop() {
   return (
     <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
       <div className="absolute inset-0 wf-grid" />
-      <svg className="wf absolute inset-0 h-full w-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" fill="none">
+      <svg className="wf hidden sm:block absolute inset-0 h-full w-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" fill="none">
         {/* Ventana del navegador */}
         <rect pathLength="1" style={d(0)} x="90" y="70" width="1260" height="680" rx="22" />
         <path pathLength="1" style={d(0.5)} d="M90 124H1350" />
@@ -123,7 +123,7 @@ function BuildBackdrop() {
         ))}
       </svg>
       {/* Cursor que recorre la maqueta */}
-      <svg className="wf-cursor" viewBox="0 0 24 24">
+      <svg className="wf-cursor hidden sm:block" viewBox="0 0 24 24">
         <path d="M5 3l14 8-6 2-2 6z" />
       </svg>
       <div className="absolute inset-0 wf-vignette" />

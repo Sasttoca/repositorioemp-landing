@@ -182,7 +182,7 @@ export default function App() {
 
           <div
             data-p
-            className="absolute inset-0 z-10 flex items-start lg:items-center pt-28 lg:pt-0 px-6 sm:px-12 lg:px-20 pointer-events-none"
+            className="hero-copy absolute inset-x-0 top-0 z-10 flex items-end lg:items-center px-6 sm:px-12 lg:px-20 pointer-events-none"
             style={{
               opacity: 'clamp(0, calc(1 - var(--p, 0) * 3.5), 1)',
               transform: 'translateY(calc(var(--p, 0) * -60px))',
@@ -190,20 +190,20 @@ export default function App() {
           >
             <div className="mx-auto w-full max-w-[1400px]">
               <div className="max-w-xl lg:max-w-[42%] flex flex-col items-start">
-                <span className="text-zinc-400 font-medium tracking-[0.3em] uppercase text-xs mb-5 border-l-2 border-white pl-3">
+                <span className="text-zinc-400 font-medium tracking-[0.22em] sm:tracking-[0.3em] uppercase text-[10px] sm:text-xs mb-3 sm:mb-5 border-l-2 border-white pl-3">
                   Creative Web Studio & Automation
                 </span>
-                <h1 className="text-4xl sm:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold tracking-[-0.035em] leading-[1.02] mb-6 text-balance">
+                <h1 className="text-[clamp(1.7rem,8.4vw,2.25rem)] sm:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold tracking-[-0.035em] leading-[1.04] mb-3 sm:mb-6 text-balance">
                   Construimos el futuro digital de tu negocio.
                 </h1>
-                <p className="text-zinc-300 text-base sm:text-lg font-normal leading-relaxed mb-9 max-w-[46ch]">
+                <p className="hero-lede text-zinc-300 text-sm sm:text-lg font-normal leading-normal sm:leading-relaxed mb-5 sm:mb-9 max-w-[46ch]">
                   Somos un estudio que diseña y desarrolla páginas web y apps web a medida.
                   Entra a la tablet para conocernos y ver nuestros proyectos.
                 </p>
                 <div className="flex flex-wrap gap-3 items-center">
                   <button
                     onClick={() => goTo('contacto')}
-                    className="pointer-events-auto px-8 py-4 bg-white text-black font-semibold text-sm tracking-wider uppercase rounded-full hover:bg-zinc-200 active:scale-[0.97] transition-all shadow-lg"
+                    className="pointer-events-auto px-6 py-3 sm:px-8 sm:py-4 bg-white text-black font-semibold text-xs sm:text-sm tracking-wider uppercase rounded-full hover:bg-zinc-200 active:scale-[0.97] transition-all shadow-lg"
                   >
                     Iniciar Proyecto
                   </button>
